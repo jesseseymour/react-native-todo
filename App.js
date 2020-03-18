@@ -6,7 +6,8 @@ import {
   ImageBackground,
   ScrollView,
   TouchableOpacity,
-  TextInput
+  TextInput,
+  AsyncStorage
 } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
 import data from "./data.json";
@@ -18,8 +19,33 @@ const App = () => {
   const [todos, setTodos] = useState([...data.tasks]);
 
   useEffect(() => {
-    // todos = [...data.tasks]
+    async function storeInitialData() {
+      await AsyncStorage.multiSet([["tasks", JSON.stringify(todos)], ["init", "true"]]);
+    }
+    checkInitialLoad().then(loaded => {
+      if(!loaded) {
+        storeInitialData().then(getData());
+      }else{
+        getAllData().then(data => console.log(data));
+      }
+    });
+    
   });
+
+  const checkInitialLoad = async () => {
+    const value = await AsyncStorage.getItem("init");
+    return value ? true : false;
+  };
+
+  const getData = async () => {
+    const value = await AsyncStorage.getItem("tasks");
+    //value && console.log(value)
+  };
+
+  const getAllData = async () => {
+    const value = await AsyncStorage.getAllKeys();
+    return value;
+  };
 
   const handleAddTodo = () => {
     if (value.length > 0) {
@@ -108,7 +134,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     alignItems: "center",
     justifyContent: "flex-start",
-    paddingTop: '15%'
+    paddingTop: "15%"
   },
   textInputContainer: {
     flexDirection: "row",
