@@ -12,6 +12,7 @@ import {
 import Icon from "react-native-vector-icons/Feather";
 import data from "./data.json";
 import Task from "./Task";
+import TaskObject from "./TaskObject";
 
 const App = () => {
   const [value, setValue] = useState("");
@@ -40,13 +41,7 @@ const App = () => {
     if (value.length > 0) {
       const tasks = [
         ...todos,
-        {
-          text: value,
-          key: Date.now(),
-          order: 0,
-          timestamp: date,
-          checked: false
-        }
+        new TaskObject({text: value, timestamp: date})
       ];
       storeTasks(tasks).then(() => {
         setTodos(tasks);
