@@ -19,56 +19,57 @@ const App = () => {
   const [todos, setTodos] = useState([...data.tasks]);
 
   useEffect(() => {
-    async function storeInitialData() {
-      await AsyncStorage.multiSet([["tasks", JSON.stringify(todos)], ["init", "true"]]);
-    }
-    checkInitialLoad().then(loaded => {
-      if(!loaded) {
-        storeInitialData().then(getData());
-      }else{
-        getAllData().then(data => console.log(data));
-      }
-    });
-    
+    getTasks()
+      .then(data => JSON.parse(data))
+      .then(json => {
+        if (json) setTodos([...json]);
+      })
+      .catch(console.error);
   });
 
-  const checkInitialLoad = async () => {
-    const value = await AsyncStorage.getItem("init");
-    return value ? true : false;
+  const getTasks = async () => {
+    const data = await AsyncStorage.getItem("tasks");
+    return data;
   };
 
-  const getData = async () => {
-    const value = await AsyncStorage.getItem("tasks");
-    //value && console.log(value)
-  };
-
-  const getAllData = async () => {
-    const value = await AsyncStorage.getAllKeys();
-    return value;
+  const storeTasks = async tasks => {
+    await AsyncStorage.setItem("tasks", JSON.stringify(tasks));
   };
 
   const handleAddTodo = () => {
     if (value.length > 0) {
-      setTodos([...todos, { text: value, key: Date.now(), checked: false }]);
-      setValue("");
+      const tasks = [
+        ...todos,
+        {
+          text: value,
+          key: Date.now(),
+          order: 0,
+          timestamp: date,
+          checked: false
+        }
+      ];
+      storeTasks(tasks).then(() => {
+        setTodos(tasks);
+        setValue("");
+      });
     }
   };
 
   const handleDeleteTodo = id => {
-    setTodos(todos.filter(task => task.key !== id));
+    const tasks = todos.filter(task => task.key !== id);
+    storeTasks(tasks).then(() => setTodos(tasks));
   };
 
   const handleCheck = id => {
-    setTodos(
-      todos.map(task =>
-        task.key === id
-          ? {
-              ...task,
-              checked: !task.checked
-            }
-          : task
-      )
+    const tasks = todos.map(task =>
+      task.key === id
+        ? {
+            ...task,
+            checked: !task.checked
+          }
+        : task
     );
+    storeTasks(tasks).then(() => setTodos(tasks));
   };
 
   const handleDateChange = (direction = 0, timestamp = null) => {
@@ -102,7 +103,13 @@ const App = () => {
           color="#900"
           onPress={() => handleDateChange(-1)}
         />
-        <Text style={{ fontSize: 16, color: "white" }}>Today</Text>
+        <Text style={{ fontSize: 16, color: "white" }}>
+          {new Date(date).toLocaleDateString(undefined, {
+            weekday: "short",
+            month: "long",
+            day: "numeric"
+          })}
+        </Text>
         <Icon
           name="chevrons-right"
           size={30}
