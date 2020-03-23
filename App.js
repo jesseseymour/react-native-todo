@@ -6,18 +6,17 @@ import {
   ImageBackground,
   ScrollView,
   TouchableOpacity,
-  TextInput,
-  AsyncStorage
+  TextInput
 } from "react-native";
+import AsyncStorage from "@react-native-community/async-storage";
 import Icon from "react-native-vector-icons/Feather";
-import data from "./data.json";
 import Task from "./Task";
 import TaskObject from "./TaskObject";
 
 const App = () => {
   const [value, setValue] = useState("");
   const [date, setDate] = useState(Date.now());
-  const [todos, setTodos] = useState([...data.tasks]);
+  const [todos, setTodos] = useState([]);
 
   useEffect(() => {
     getTasks()
@@ -25,8 +24,7 @@ const App = () => {
       .then(json => {
         if (json) setTodos([...json]);
       })
-      .catch(console.error);
-  });
+  }, []);
 
   const getTasks = async () => {
     const data = await AsyncStorage.getItem("tasks");
@@ -41,7 +39,7 @@ const App = () => {
     if (value.length > 0) {
       const tasks = [
         ...todos,
-        new TaskObject({text: value, timestamp: date})
+        new TaskObject({ text: value, timestamp: date })
       ];
       storeTasks(tasks).then(() => {
         setTodos(tasks);
