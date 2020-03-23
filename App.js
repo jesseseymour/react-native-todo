@@ -9,6 +9,7 @@ import {
   TextInput
 } from "react-native";
 import AsyncStorage from "@react-native-community/async-storage";
+import DraggableFlatList from "react-native-draggable-flatlist";
 import Icon from "react-native-vector-icons/Feather";
 import Task from "./Task";
 import TaskObject from "./TaskObject";
@@ -23,7 +24,7 @@ const App = () => {
       .then(data => JSON.parse(data))
       .then(json => {
         if (json) setTodos([...json]);
-      })
+      });
   }, []);
 
   const getTasks = async () => {
@@ -70,21 +71,44 @@ const App = () => {
     setDate(dateObj.setDate(dateObj.getDate() + direction));
   };
 
+  const handleDragEnd = data => {
+    const updatedTasks = [...todos];
+    data.forEach((task, i) => {
+      updatedTasks[
+        updatedTasks.findIndex(_task => task.key === _task.key)
+      ].order = i;
+    });
+    storeTasks(updatedTasks).then(() => setTodos(updatedTasks));
+  };
+
   const getTodoList = () => {
     const dateString = new Date(date).toDateString();
-    const filteredList = todos.filter(
-      todo => new Date(todo.timestamp).toDateString() === dateString
-    );
+    const filteredList = todos
+      .filter(todo => new Date(todo.timestamp).toDateString() === dateString)
+      .sort((a, b) => a.order - b.order);
 
-    return filteredList.map(task => (
-      <Task
-        text={task.text}
-        key={task.key}
-        checked={task.checked}
-        delete={() => handleDeleteTodo(task.key)}
-        check={() => handleCheck(task.key)}
+    return (
+      <DraggableFlatList
+        data={filteredList}
+        renderItem={renderTask}
+        keyExtractor={item => `draggable-item-${item.key}`}
+        onDragEnd={({ data }) => handleDragEnd(data)}
       />
-    ));
+    );
+  };
+
+  const renderTask = ({ item, index, drag, isActive }) => {
+    return (
+      <TouchableOpacity onLongPress={drag}>
+        <Task
+          text={item.text}
+          key={item.key}
+          checked={item.checked}
+          delete={() => handleDeleteTodo(item.key)}
+          check={() => handleCheck(item.key)}
+        />
+      </TouchableOpacity>
+    );
   };
 
   return (
@@ -123,7 +147,8 @@ const App = () => {
           <Icon name="plus" size={30} color="#900" style={{ marginLeft: 15 }} />
         </TouchableOpacity>
       </View>
-      <ScrollView style={{ width: "100%" }}>{getTodoList()}</ScrollView>
+      {/* <ScrollView style={{ width: "100%" }}>{getTodoList()}</ScrollView> */}
+      {getTodoList()}
     </View>
   );
 };
