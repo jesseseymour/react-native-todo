@@ -18,7 +18,6 @@ const App = () => {
   const [value, setValue] = useState("");
   const [date, setDate] = useState(Date.now());
   const [todos, setTodos] = useState([]);
-
   useEffect(() => {
     getTasks()
       .then(data => JSON.parse(data))
@@ -27,6 +26,9 @@ const App = () => {
       });
   }, []);
 
+  useEffect(() => {
+    storeTasks(todos);
+  }, [todos]);
   const getTasks = async () => {
     const data = await AsyncStorage.getItem("tasks");
     return data;
@@ -43,15 +45,14 @@ const App = () => {
         new TaskObject({ text: value, timestamp: date })
       ];
       storeTasks(tasks).then(() => {
-        setTodos(tasks);
-        setValue("");
-      });
+      setTodos(tasks);
+      setValue("");
     }
   };
 
   const handleDeleteTodo = id => {
     const tasks = todos.filter(task => task.key !== id);
-    storeTasks(tasks).then(() => setTodos(tasks));
+    setTodos(tasks);
   };
 
   const handleCheck = id => {
@@ -63,7 +64,7 @@ const App = () => {
           }
         : task
     );
-    storeTasks(tasks).then(() => setTodos(tasks));
+    setTodos(tasks);
   };
 
   const handleDateChange = (direction = 0, timestamp = null) => {
@@ -78,7 +79,8 @@ const App = () => {
         updatedTasks.findIndex(_task => task.key === _task.key)
       ].order = i;
     });
-    storeTasks(updatedTasks).then(() => setTodos(updatedTasks));
+    
+    setTodos(updatedTasks);
   };
 
   const getTodoList = () => {
@@ -110,7 +112,7 @@ const App = () => {
       </TouchableOpacity>
     );
   };
-
+ 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
