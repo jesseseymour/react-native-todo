@@ -4,7 +4,7 @@ export default class TaskObject {
     this.text = text || "";
     this.key = key || Date.now();
     this.checked = checked || false;
-    this.timestamp = timestamp || Date.now();
+    this.timestamp = parseInt(timestamp) || Date.now();
     this.order = order || 0;
   }
 }

@@ -3,8 +3,7 @@ import {
   StyleSheet,
   Text,
   View,
-  ImageBackground,
-  ScrollView,
+  Keyboard,
   TouchableOpacity,
   TextInput
 } from "react-native";
@@ -59,11 +58,11 @@ const App = () => {
 
   const handleAddTodo = () => {
     if (value.length > 0) {
+      Keyboard.dismiss();
       const tasks = [
-        ...todos,
-        new TaskObject({ text: value, timestamp: date })
+        new TaskObject({ text: value, timestamp: date }),
+        ...todos
       ];
-      storeTasks(tasks).then(() => {
       setTodos(tasks);
       setValue("");
     }
@@ -158,17 +157,17 @@ const App = () => {
       <View style={styles.textInputContainer}>
         <TextInput
           style={styles.textInput}
-          multiline
+          multiline={false}
           placeholder={"What do you need to do?"}
           placeholderTextColor="white"
           onChangeText={value => setValue(value)}
           value={value}
+          onSubmitEditing={() => handleAddTodo()}
         />
         <TouchableOpacity onPress={() => handleAddTodo()}>
           <Icon name="plus" size={30} color="#900" style={{ marginLeft: 15 }} />
         </TouchableOpacity>
       </View>
-      {/* <ScrollView style={{ width: "100%" }}>{getTodoList()}</ScrollView> */}
       {getTodoList()}
     </View>
   );
