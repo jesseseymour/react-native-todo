@@ -19,6 +19,16 @@ const App = () => {
   const [date, setDate] = useState(Date.now());
   const [todos, setTodos] = useState([]);
   useEffect(() => {
+    const getDate = async () => {
+      const data = await AsyncStorage.getItem("date");
+      return data;
+    };
+    getDate().then(data => {
+      if (!Number.isNaN(data) && data !== "NaN") {
+        setDate(data.toString());
+      }
+    });
+
     getTasks()
       .then(data => JSON.parse(data))
       .then(json => {
@@ -29,6 +39,11 @@ const App = () => {
   useEffect(() => {
     storeTasks(todos);
   }, [todos]);
+
+  useEffect(() => {
+    storeDate(date);
+  }, [date]);
+
   const getTasks = async () => {
     const data = await AsyncStorage.getItem("tasks");
     return data;
@@ -36,6 +51,10 @@ const App = () => {
 
   const storeTasks = async tasks => {
     await AsyncStorage.setItem("tasks", JSON.stringify(tasks));
+  };
+
+  const storeDate = async date => {
+    await AsyncStorage.setItem("date", date.toString());
   };
 
   const handleAddTodo = () => {
@@ -68,7 +87,7 @@ const App = () => {
   };
 
   const handleDateChange = (direction = 0, timestamp = null) => {
-    const dateObj = new Date(date);
+    const dateObj = new Date(parseInt(date));
     setDate(dateObj.setDate(dateObj.getDate() + direction));
   };
 
@@ -84,7 +103,7 @@ const App = () => {
   };
 
   const getTodoList = () => {
-    const dateString = new Date(date).toDateString();
+    const dateString = new Date(parseInt(date)).toDateString();
     const filteredList = todos
       .filter(todo => new Date(todo.timestamp).toDateString() === dateString)
       .sort((a, b) => a.order - b.order);
@@ -123,7 +142,7 @@ const App = () => {
           onPress={() => handleDateChange(-1)}
         />
         <Text style={{ fontSize: 16, color: "white" }}>
-          {new Date(date).toLocaleDateString(undefined, {
+          {new Date(parseInt(date)).toLocaleDateString(undefined, {
             weekday: "short",
             month: "long",
             day: "numeric"
