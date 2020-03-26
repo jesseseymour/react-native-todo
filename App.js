@@ -24,7 +24,7 @@ const App = () => {
     };
     getDate().then(data => {
       if (!Number.isNaN(data) && data !== "NaN") {
-        setDate(data.toString());
+        data && setDate(data.toString());
       }
     });
 
