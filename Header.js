@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { primaryColor } from "./Colors";
+import { primaryColor, primaryTextColor } from "./Colors";
 
 const Header = ({ date }) => {
   return (
@@ -11,12 +11,13 @@ const Header = ({ date }) => {
           color="#900"
           onPress={() => handleDateChange(-1)}
         /> */}
-      <Text style={{ fontSize: 16, color: "white" }}>
-        {new Date(parseInt(date)).toLocaleDateString(undefined, {
+      <Text style={{ fontSize: 16, color: primaryTextColor, fontWeight: "bold" }}>
+        {/* {new Date(parseInt(date)).toLocaleDateString(undefined, {
           weekday: "short",
           month: "long",
           day: "numeric"
-        })}
+        })} */}
+        What do you need to do today?
       </Text>
       {/* <Icon
           name="chevrons-right"
@@ -36,7 +37,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: primaryColor,
     width: "100%",
-    height: 50
+    height: 50,
     // paddingTop: "5%",
     // paddingBottom: 5
   }

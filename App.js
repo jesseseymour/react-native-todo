@@ -88,6 +88,7 @@ const App = () => {
   }, [date]);
 
   useEffect(() => {
+    if(isAdding) this.textInput.focus();
     Animated.timing(translateY, {
       toValue: isAdding ? -300 : 0,
       duration: 500
@@ -126,8 +127,8 @@ const App = () => {
       ];
       setTodos(tasks);
       setValue("");
-      setIsAdding(false);
     }
+    setIsAdding(false);
   };
 
   const handleDeleteTodo = id => {
@@ -179,6 +180,7 @@ const App = () => {
           style={{ ...styles.textInputContainer, transform: [{ translateY }] }}
         >
           <TextInput
+            ref={(input) => { this.textInput = input; }}
             style={styles.textInput}
             multiline
             placeholder={"What do you need to do?"}
@@ -211,6 +213,7 @@ const App = () => {
         onPressItem={name => {
           if (name === "done") handleAddTodo();
         }}
+        color={primaryColor}
         actions={[
           {
             name: "done",
