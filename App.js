@@ -1,22 +1,66 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   Text,
+  Animated,
   View,
   Keyboard,
   TouchableOpacity,
   TextInput
 } from "react-native";
 import AsyncStorage from "@react-native-community/async-storage";
-import DraggableFlatList from "react-native-draggable-flatlist";
-import Icon from "react-native-vector-icons/Feather";
-import Task from "./Task";
+import { FloatingAction } from "react-native-floating-action";
+import Header from "./Header";
+import List from "./List";
+import Icon from "react-native-vector-icons/MaterialIcons";
 import TaskObject from "./TaskObject";
+
+import {
+  primaryColor,
+  primaryLightColor,
+  primaryDarkColor,
+  primaryTextColor,
+  backgroundColor
+} from "./Colors";
+
+/* 
+  class App extends React.Component {
+    constructor() {
+      super();
+      this.state = {
+        opacity: new Animated.Value(0)
+      };
+    }
+    componentDidMount() {
+      Animated.timing(this.state.opacity, {
+        toValue: 1,
+        duration: 500
+      }).start();
+    }
+    render() {
+      return (
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Animated.View
+              style={{
+                ...styles.textInputContainer,
+                opacity: this.state.opacity
+              }}
+            ></Animated.View>
+          </View>
+        </View>
+      );
+    }
+  } 
+*/
 
 const App = () => {
   const [value, setValue] = useState("");
   const [date, setDate] = useState(Date.now());
   const [todos, setTodos] = useState([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const translateY = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     const getDate = async () => {
       const data = await AsyncStorage.getItem("date");
@@ -43,6 +87,23 @@ const App = () => {
     storeDate(date);
   }, [date]);
 
+  useEffect(() => {
+    Animated.timing(translateY, {
+      toValue: isAdding ? -300 : 0,
+      duration: 500
+    }).start();
+  }, [isAdding]);
+
+  /* useEffect(() => {
+    Animated.timing(
+      opacity,
+      {
+        toValue: opacityValue,
+        duration: 500
+      }
+    ).start();
+  }, [opacityValue]) */
+
   const getTasks = async () => {
     const data = await AsyncStorage.getItem("tasks");
     return data;
@@ -65,6 +126,7 @@ const App = () => {
       ];
       setTodos(tasks);
       setValue("");
+      setIsAdding(false);
     }
   };
 
@@ -97,78 +159,77 @@ const App = () => {
         updatedTasks.findIndex(_task => task.key === _task.key)
       ].order = i;
     });
-    
+
     setTodos(updatedTasks);
   };
 
-  const getTodoList = () => {
-    const dateString = new Date(parseInt(date)).toDateString();
-    const filteredList = todos
-      .filter(todo => new Date(todo.timestamp).toDateString() === dateString)
-      .sort((a, b) => a.order - b.order);
-
-    return (
-      <DraggableFlatList
-        data={filteredList}
-        renderItem={renderTask}
-        keyExtractor={item => `draggable-item-${item.key}`}
-        onDragEnd={({ data }) => handleDragEnd(data)}
-      />
-    );
+  const handleFloatingAction = () => {
+    setOpacityValue(opacityValue === 1 ? 0 : 1);
   };
 
-  const renderTask = ({ item, index, drag, isActive }) => {
-    return (
-      <TouchableOpacity onLongPress={drag}>
-        <Task
-          text={item.text}
-          key={item.key}
-          checked={item.checked}
-          delete={() => handleDeleteTodo(item.key)}
-          check={() => handleCheck(item.key)}
-        />
-      </TouchableOpacity>
-    );
+  const toggleInput = () => {
+    setIsAdding(!isAdding);
   };
- 
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Icon
-          name="chevrons-left"
-          size={30}
-          color="#900"
-          onPress={() => handleDateChange(-1)}
-        />
-        <Text style={{ fontSize: 16, color: "white" }}>
-          {new Date(parseInt(date)).toLocaleDateString(undefined, {
-            weekday: "short",
-            month: "long",
-            day: "numeric"
-          })}
-        </Text>
-        <Icon
-          name="chevrons-right"
-          size={30}
-          color="#900"
-          onPress={() => handleDateChange(1)}
+      <View style={{ zIndex: 0, display: "flex", flex: 1, width: "100%" }}>
+        <Header date={date} />
+        <Animated.View
+          style={{ ...styles.textInputContainer, transform: [{ translateY }] }}
+        >
+          <TextInput
+            style={styles.textInput}
+            multiline
+            placeholder={"What do you need to do?"}
+            placeholderTextColor={primaryColor}
+            onChangeText={value => setValue(value)}
+            value={value}
+            // onSubmitEditing={() => handleAddTodo()}
+          />
+          <TouchableOpacity onPress={() => handleAddTodo()}>
+            <Icon name="add" size={30} color={primaryTextColor} />
+          </TouchableOpacity>
+        </Animated.View>
+        <List
+          todos={todos}
+          backgroundColor={backgroundColor}
+          handleDeleteTodo={handleDeleteTodo}
+          handleCheck={handleCheck}
+          handleDragEnd={handleDragEnd}
         />
       </View>
-      <View style={styles.textInputContainer}>
-        <TextInput
-          style={styles.textInput}
-          multiline={false}
-          placeholder={"What do you need to do?"}
-          placeholderTextColor="white"
-          onChangeText={value => setValue(value)}
-          value={value}
-          onSubmitEditing={() => handleAddTodo()}
+      <FloatingAction
+        onPressMain={() => {
+          if(isAdding) {
+            setValue("")
+            Keyboard.dismiss()
+          }
+          toggleInput();
+        }}
+        showBackground={false}
+        onPressItem={name => {
+          if (name === "done") handleAddTodo();
+        }}
+        actions={[
+          {
+            name: "done",
+            icon: <Icon name="done" color={primaryTextColor} size={25} />,
+            buttonSize: 56,
+            margin: 0
+          }
+        ]}
+      />
+      {/* <TouchableOpacity
+        style={styles.floatingActionButton}
+        onPress={() => toggleInput()}
+      >
+        <Icon
+          name={`${isAdding ? "check-circle" : "add-circle"}`}
+          size={50}
+          color={primaryLightColor}
         />
-        <TouchableOpacity onPress={() => handleAddTodo()}>
-          <Icon name="plus" size={30} color="#900" style={{ marginLeft: 15 }} />
-        </TouchableOpacity>
-      </View>
-      {getTodoList()}
+      </TouchableOpacity> */}
     </View>
   );
 };
@@ -176,18 +237,22 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor,
     alignItems: "center",
-    justifyContent: "flex-start",
-    paddingTop: "15%"
+    justifyContent: "flex-start"
+    // paddingTop: "5%",
   },
   textInputContainer: {
     flexDirection: "row",
     alignItems: "baseline",
-    borderColor: "rgb(222,222,222)",
-    borderBottomWidth: 1,
     paddingRight: 10,
-    paddingBottom: 5
+    paddingBottom: 5,
+    position: "absolute",
+    top: "100%",
+    width: "100%",
+    height: "100%",
+    zIndex: 1,
+    backgroundColor: primaryTextColor
   },
   textInput: {
     // height: 20,
@@ -196,13 +261,18 @@ const styles = StyleSheet.create({
     // marginTop: "5%",
     // padding: 0,
     fontSize: 20,
-    // fontWeight: "bold",
-    color: "white"
+    fontWeight: "100",
+    color: primaryColor
     // paddingLeft: 10
   },
-  header: {
-    display: "flex",
-    flexDirection: "row"
+  floatingActionButton: {
+    borderRadius: 100,
+    position: "absolute",
+    right: 20,
+    bottom: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 120
   }
 });
 
